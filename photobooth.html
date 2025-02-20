@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Document</title>
+</head>
+<body>
+   <div class="container">
+      <div>
+         <h1>JAM.STUDIO</h1>
+      </div>
+      <div class="video-container">
+         <div id="countdown">Taking photo in...</div>
+         <video id="video" autoplay></video> 
+         <div id="counter">0/4</div>
+      </div>
+      <button class="download-button" onclick="capturePhotowithCountdown()">Capture</button>
+   </div>
+
+   <audio id="countdown-sound" src="countdown.mp3"></audio>
+   <audio id="shutter-sound" src="shutter.mp3"></audio>
+
+   <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+      body {
+         display: flex;
+         justify-content: start;
+         align-items: center;
+         height: 100vh;
+         margin: 0;
+         padding: 0;
+         background-color: #f1f1f1;
+         font-family: 'Montserrat', sans-serif;
+      }
+      .container {
+         width: 100%;
+         height: 100%;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         background-image: url('bg.png');
+         background-size: cover; 
+         background-position: center;
+         background-repeat: no-repeat;
+         flex-direction: column;
+      }
+      .container h1 {
+         font-size: 2rem;
+         color: #fff;
+         text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+      }
+      .video-container {
+         position: relative;
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+      }
+      #countdown {
+         position: absolute;
+         top: 10px;
+         left: 50%;
+         transform: translateX(-50%);
+         font-size: 1.5rem;
+         color: #fff;
+         text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+      }
+      #counter {
+         position: absolute;
+         bottom: 10px;
+         left: 50%;
+         transform: translateX(-50%);
+         font-size: 1.5rem;
+         color: #fff;
+         text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+      }
+      .download-button {
+         width: 30%;
+         height: 60px;
+         border-radius: 10px;
+         border: none;
+         color: #1f1f1f;
+         font-family: 'Montserrat', sans-serif;
+         background-color: violet;
+         cursor: pointer;
+         margin-top: 20px;
+      }
+      .download-button:hover {
+         background-color: #d4a5ff;
+      }
+   </style>
+
+   <script>
+      let captureCount = 0;
+      const video = document.getElementById('video');
+      const countdownElement = document.getElementById('countdown');
+      const counterElement = document.getElementById('counter');
+      const captureImages = [];
+      const countdownSound = document.getElementById('countdown-sound');
+      const shutterSound = document.getElementById('shutter-sound');
+
+      navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+         video.srcObject = stream;
+      })
+      .catch(error => {
+         console.error('Error accessing the camera', error);
+      });
+
+      function capturePhotowithCountdown() {
+         let countdown = 3;
+         countdownElement.textContent = `Taking photo in... ${countdown}`;
+         countdownSound.play();
+
+         const countdownInterval = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+               countdownElement.textContent = `Taking photo in... ${countdown}`;
+               countdownSound.play();
+            } else {
+               clearInterval(countdownInterval);
+               countdownElement.textContent = '';
+               capturePhoto();
+            }
+         }, 1000);
+      }
+
+      function capturePhoto() {
+         captureCount++;
+         counterElement.textContent = `${captureCount}/4`;
+         shutterSound.play();
+
+         const canvas = document.createElement('canvas');
+         canvas.width = video.videoWidth;
+         canvas.height = video.videoHeight;
+         const context = canvas.getContext('2d');
+         context.drawImage(video, 0, 0, canvas.width, canvas.height);
+         const imageDataUrl = canvas.toDataURL('image/png');
+         captureImages.push(imageDataUrl);
+
+         if (captureCount < 4) {
+            setTimeout(capturePhotowithCountdown, 1000);
+         } else {
+            redirectingToDownload();
+         }
+      }
+
+      function redirectingToDownload() {
+         localStorage.setItem('captureImages', JSON.stringify(captureImages));
+         window.location.href = "download.html";
+      }
+   </script>
+</body>
+</html>
